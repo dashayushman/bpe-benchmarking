@@ -18,7 +18,7 @@ filters = 250
 kernel_size = 3
 
 hidden_dims = 250
-epochs = 200
+epochs = 50
 bpemb_dims = 50
 
 bpemb_en = BPEmb(lang="en", dim=bpemb_dims)
@@ -55,6 +55,23 @@ with open("../datasets/Chatbot/train.csv", "r") as f:
             x = padded
 
 
+x_test = None
+y_test = []
+with open("../datasets/Chatbot/test.csv", "r") as f:
+    reader = csv.reader(f, delimiter="\t")
+    for row in tqdm(reader):
+        embeddings = bpemb_en.embed(row[0])
+        y_test.append(row[1])
+        padding_vec = np.zeros((max_len - embeddings.shape[0], bpemb_dims))
+        padded = np.vstack((embeddings, padding_vec))
+        padded = np.expand_dims(padded, axis=0)
+        if x_test is not None:
+            x_test = np.vstack((x_test, padded))
+        else:
+            x_test = padded
+y_test_enc = le.transform(y_test)
+y_test = to_categorical(y_test_enc, num_classes=len(le.classes_))
+print(x_test.shape, y_test.shape)
 print('Build model...')
 model = Sequential()
 
@@ -85,4 +102,4 @@ model.compile(loss='binary_crossentropy',
               metrics=['accuracy'])
 model.fit(x, y,
           batch_size=batch_size,
-          epochs=epochs, validation_split=0.1)
+          epochs=epochs, validation_data=(x_test, y_test))
