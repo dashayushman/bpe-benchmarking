@@ -1,0 +1,5 @@
+keras
+bpemb
+tqdm
+tensorflow
+sklearn
